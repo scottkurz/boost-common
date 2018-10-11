@@ -55,8 +55,19 @@ public class SpringBootUtil {
      * @throws BoostException
      */
     public static String getBoostedSpringBootUberJarPath(File artifact) throws BoostException {
-        if (artifact == null || !artifact.exists() || !artifact.isFile()) {
-            throw new BoostException("Could not find a project artifact.");
+
+        if (artifact == null) {
+            throw new BoostException("Throwing exception since <null> passed for File artifact.");
+        } else if (!artifact.exists()) {
+            String artifactPath = getArtifactPath(artifact);
+            String excMsg = "Could not find a project artifact at path = " + artifactPath
+                    + ". Perhaps it hasn't been built yet, and this build executed a goal without executing a necessary prerequisite goal.";
+            throw new BoostException(excMsg);
+        } else if (!artifact.isFile()) {
+            String artifactPath = getArtifactPath(artifact);
+            String excMsg = "Found project artifact at path = " + artifactPath
+                    + ", but it was either a directory or not a normal file.";
+            throw new BoostException(excMsg);
         }
 
         try {
@@ -64,6 +75,25 @@ public class SpringBootUtil {
         } catch (IOException e) {
             throw new BoostException("Error getting Spring Boot uber JAR path.", e);
         }
+    }
+
+    /**
+     * Get the artifact path
+     *
+     * @param artifact
+     * @return the canonical path, if it can be obtained successfully, otherwise the
+     *         absolute path
+     */
+    private static String getArtifactPath(File artifact) {
+        String retVal = null;
+        try {
+            if (artifact != null) {
+                retVal = artifact.getCanonicalPath();
+            }
+        } catch (IOException ioexc) {
+            retVal = artifact.getAbsolutePath();
+        }
+        return retVal;
     }
 
     /**
